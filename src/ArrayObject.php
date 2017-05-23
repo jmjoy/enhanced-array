@@ -13,6 +13,9 @@ class ArrayObject extends ArrayObject {
         return (array) $this;
     }
 
+    public function toJson() {
+    }
+
 	public function get($key, $default = null, $callback = null) {
         if ($this->isArray($key)) {
             $value = &$this;
@@ -28,7 +31,6 @@ class ArrayObject extends ArrayObject {
             $value = isset($this[$key]) ? $this[$key] : $default;
         }
 
-        callback:
 		return ($callback === null) ? $value : $this->callFunc($callback, array($value));
 	}
 
@@ -45,6 +47,10 @@ class ArrayObject extends ArrayObject {
         return $this;
     }
 
+    public function has($key) {
+        return isset($this[$key]);
+    }
+
     public function remove($key) {
         if ($this->isArray($key)) {
             $ref = &$this;
@@ -56,6 +62,10 @@ class ArrayObject extends ArrayObject {
             unset($this[$key]);
         }
         return $this;
+    }
+
+    public function in($value) {
+        return in_array($value, $this);
     }
 
     public function map($callback) {
@@ -119,6 +129,32 @@ class ArrayObject extends ArrayObject {
         }
 
         return $instance;
+    }
+
+    public function all($callback = null) {
+        foreach ($this as $key => $value) {
+            if (!($callback ? $this->callFunc($callback, array($value, $key)) : $value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function any($callback = null) {
+        foreach ($this as $key => $value) {
+            if ($callback ? $this->callFunc($callback, array($value, $key)) : $value) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function sum($callback = null) {
+        $sum = 0;
+        foreach ($this as $key => $value) {
+            $sum += ($callback ? $this->callFund($callback, array($value, $key)) : $value);
+        }
+        return $sum;
     }
 
     protected function isArray($key) {
