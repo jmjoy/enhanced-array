@@ -13,7 +13,8 @@ class ArrayObject extends ArrayObject {
         return (array) $this;
     }
 
-    public function toJson() {
+    public function toJson($options = 0, $depth = 512) {
+        return json_encode($this, $options, $depth);
     }
 
 	public function get($key, $default = null, $callback = null) {
@@ -68,12 +69,69 @@ class ArrayObject extends ArrayObject {
         return in_array($value, $this);
     }
 
+    public function sort($flag = SORT_REGULAR) {
+        if (is_int($flag)) {
+            sort($this, $flag);
+        } else {
+            usort($this, $flag);
+        }
+        return $this;
+    }
+
+    public function merge($array) {
+        return array_merge($this, $array);
+    }
+
+    public function each($callback) {
+        foreach ($this as $key => $value) {
+            $result = call_user_func($callback, $value, $key);
+            if ($result === false) {
+                break;
+            }
+        }
+    }
+
+    public function chunk($size) {
+        return array_chunk($this, $size);
+    }
+
+    public function column($key) {
+        $instance = new static();
+        foreach ($this as $key => $value) {
+            if ($this->isArray($key)) {
+                for ($i = 0, $count = count($key); $i < $count; $i += 1) {
+                    $value = &$value[$key[$i]];
+                }
+                $instance[$key] = $value;
+            } else {
+                $instance[$key] = $value[$key];
+            }
+        }
+        return $instance;
+    }
+
+    public function combine($array) {
+        return array_combine($this, $array);
+    }
+
+    public function min() {
+        return min($this);
+    }
+
+    public function max() {
+        return max($this);
+    }
+
+    public function reverse() {
+        return array_reverse($this);
+    }
+
     public function map($callback) {
         $instance = new static();
         foreach ($this as $key => $value) {
             $result = call_user_func($callback, $value, $key);
-            if ($result instanceof Tuple) {
-                $instance[$result->left] = $instance[$result->right];
+            if ($result instanceof KeyValue) {
+                $instance[$result->key] = $instance[$result->value];
             } else {
                 $instance[$key] = $value;
             }
@@ -117,7 +175,7 @@ class ArrayObject extends ArrayObject {
         return $result;
     }
 
-    public function indexBy($index) {
+    public function keyBy($index) {
         $instance = new static();
 
         foreach ($this as $key => $value) {
@@ -152,9 +210,96 @@ class ArrayObject extends ArrayObject {
     public function sum($callback = null) {
         $sum = 0;
         foreach ($this as $key => $value) {
-            $sum += ($callback ? $this->callFund($callback, array($value, $key)) : $value);
+            $sum += ($callback ? $this->callFunc($callback, array($value, $key)) : $value);
         }
         return $sum;
+    }
+
+    public function product($callback = null) {
+        $sum = 1;
+        foreach ($this as $key => $value) {
+            $sum *= ($callback ? $this->callFunc($callback, array($value, $key)) : $value);
+        }
+        return $sum;
+    }
+
+    public function flatten() {
+        $instance = new static();
+        foreach ($this as $key => $row) {
+            foreach ($row as $value) {
+                $instance[] = $value;
+            }
+        }
+        return $instance;
+    }
+
+    public function first($callback, $returnKeyValue = false) {
+        foreach ($this as $key => $value) {
+            if ($this->callFunc($callback, array($value, $key))) {
+                if ($returnKeyValue) {
+                    return new KeyValue($key, $value);
+                }
+                return $value;
+            }
+        }
+        if ($returnKeyValue) {
+            return new KeyValue(null, null);
+        }
+        return null;
+    }
+
+    public function take($n) {
+        $instance = new static();
+        $i = 0;
+        $count = count($this);
+        $is_int = is_int($n);
+
+        while (true) {
+            if ($i >= $count) {
+                break;
+            }
+            if ($is_int) {
+                if ($i >= $n) {
+                    break;
+                }
+            } else {
+                if (!$this->callFunc($n, array($this[$i], $i))) {
+                    break;
+                }
+            }
+            $instance[] = $this[$i];
+            $i += 1;
+        }
+        return $instance;
+    }
+
+    public function drop($n) {
+        $i = 0;
+        $count = count($this);
+        $is_int = is_int($n);
+
+        while (true) {
+            if ($i >= $count) {
+                break;
+            }
+            if ($is_int) {
+                if ($i >= $n) {
+                    break;
+                }
+            } else {
+                if (!$this->callFunc($n, array($this[$i], $i))) {
+                    break;
+                }
+            }
+            $i += 1;
+        }
+
+        $instance = new static();
+        for ($j = $i; $j <= $i; $i += 1) {
+            $instance[] = $this[$i];
+        }
+
+        return $instance;
     }
 
     protected function isArray($key) {
