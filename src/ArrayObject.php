@@ -7,14 +7,14 @@ use Countable;
 /**
  * Enhanced ArrayObject
  */
-class ArrayObject extends ArrayObject {
+class ArrayObject extends \ArrayObject {
 
     public function toArray() {
         return (array) $this;
     }
 
-    public function toJson($options = 0, $depth = 512) {
-        return json_encode($this, $options, $depth);
+    public function toJson($options = 0) {
+        return json_encode($this->toArray(), $options);
     }
 
 	public function get($key, $default = null, $callback = null) {
