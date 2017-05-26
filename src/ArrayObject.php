@@ -21,8 +21,8 @@ class ArrayObject extends \ArrayObject {
         if ($this->isArray($key)) {
             $value = &$this;
             for ($i = 0, $count = count($key); $i < $count; $i += 1) {
-                if (isset($ref[$key])) {
-                    $value = &$value[$key];
+                if (isset($value[$key[$i]])) {
+                    $value = &$value[$key[$i]];
                 } else {
                     $value = $default;
                     break;

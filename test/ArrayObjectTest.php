@@ -58,6 +58,8 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
             array(4, array(array(2, 1, 3), 3, 4)),
             array(2, array(array(2.1, 1.1, 3.1), 0, null, 'intval')),
             array('name3', array(array('name' => array('name2' => 'name3')), array('name', 'name2'))),
+            array(null, array(array('name' => array('name2' => 'name3')), array('name', 0))),
+            array('22', array(array(array(11, 22)), array(0, 1), 0, 'strval')),
         );
     }
 
