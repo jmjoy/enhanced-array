@@ -2,6 +2,7 @@
 
 namespace functional;
 
+use ArrayAccess;
 use Countable;
 
 /**
@@ -21,7 +22,7 @@ class ArrayObject extends \ArrayObject {
         if ($this->isArray($key)) {
             $value = &$this;
             for ($i = 0, $count = count($key); $i < $count; $i += 1) {
-                if (isset($value[$key[$i]])) {
+                if ($this->isArray($value) && isset($value[$key[$i]])) {
                     $value = &$value[$key[$i]];
                 } else {
                     $value = $default;
@@ -49,33 +50,68 @@ class ArrayObject extends \ArrayObject {
     }
 
     public function has($key) {
+        if ($this->isArray($key)) {
+            $ref = &$this;
+            for ($i = 0, $count = count($key); $i < $count; $i += 1) {
+                if (!$this->isArray($ref) || !isset($ref[$key[$i]])) {
+                    return false;
+                }
+                $ref = &$ref[$key[$i]];
+            }
+            return true;
+        }
         return isset($this[$key]);
     }
 
     public function remove($key) {
         if ($this->isArray($key)) {
             $ref = &$this;
-            for ($i = 0, $count = count($key) - 1; $i < $count; $i += 1) {
+            for ($i = 0, $count = count($key); $i < $count - 1; $i += 1) {
+                if (!$this->isArray($ref) || !isset($ref[$key[$i]])) {
+                    return $this;
+                }
                 $ref = &$ref[$key[$i]];
             }
-            unset($ref[count($key) - 1]);
+            if ($this->isArray($ref) && isset($ref[$key[count($key) - 1]])) {
+                unset($ref[$key[count($key) - 1]]);
+            }
         } else {
-            unset($this[$key]);
+            if (isset($this[$key])) {
+                unset($this[$key]);
+            }
         }
         return $this;
     }
 
-    public function in($value) {
-        return in_array($value, $this);
+    public function in($value, $strict = false) {
+        return in_array($value, $this->toArray(), $strict);
     }
 
     public function sort($flag = SORT_REGULAR) {
+        $array = $this->toArray();
         if (is_int($flag)) {
-            sort($this, $flag);
+            sort($array, $flag);
         } else {
-            usort($this, $flag);
+            usort($array, $flag);
         }
-        return $this;
+        return new static($array);
+    }
+
+    public function sortByKeys($keys) {
+        return $this->sort(function($left, $right) use ($keys) {
+            foreach ($keys as $key => $sort) {
+                $leftValue = !empty($left[$key]) ? $left[$key] : 0;
+                $rightValue = !empty($right[$key]) ? $right[$key] : 0;
+
+                if ($leftValue != $rightValue) {
+                    if ($sort == SORT_DESC) {
+                        return $leftValue < $rightValue ? 1 : -1;
+                    }
+                    return $leftValue > $rightValue ? 1 : -1;
+                }
+            }
+            return 0;
+        });
     }
 
     public function merge($array) {
@@ -302,8 +338,8 @@ class ArrayObject extends \ArrayObject {
         return $instance;
     }
 
-    protected function isArray($key) {
-        return is_array($key) || ($key instanceof ArrayAccess && $key instanceof Countable);
+    protected function isArray($val) {
+        return is_array($val) || ($val instanceof ArrayAccess && $val instanceof Countable);
     }
 
     protected function callFunc($callback, $params = array()) {
