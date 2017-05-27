@@ -4,51 +4,15 @@ use functional\Arr;
 
 class ArrObjectTest extends PHPUnit_Framework_TestCase {
 
-    protected $testData;
-
-    public function setUp() {
-        $this->testData = array(
-            'ints' => array(1, 3, 2, 5, 4, 7, 6, 6, 9, 8),
-            'map' => array(
-                'aaa' => 1,
-                'bbb' => 4,
-                'ccc' => 3,
-                'trim' => 6,
-            ),
-            'map2' => array(
-                'aaa' => 1,
-                'bbb' => '2',
-                'ccc' => 3,
-                'trim' => 6,
-            ),
-            'maps' => array(
-                array(
-                    'aaa' => 1,
-                    'bbb' => 'bbb',
-                    'ccc' => 'ccc',
-                    'trim' => 'ddd',
-                ),
-                array(
-                    'aaa' => 2,
-                    'bbb' => 'bbb2',
-                    'ccc' => 'ccc2',
-                    'trim' => 'ddd2',
-                ),
-            ),
-        );
-    }
-
-    public function tearDown() {
-        $this->testData = null;
-    }
-
     public function testToArray() {
         $this->assertEquals(array(1, 2, 3), Arr::toArray(array(1, 2, 3)));
     }
 
     public function testToJson() {
         $this->assertEquals('[1,2,3]', Arr::toJson(array(1, 2, 3)));
-        $this->assertEquals('{"aaa":1,"bbb":"2","ccc":3,"trim":6}', Arr::toJson($this->testData['map2']));
+        $this->assertEquals('{"aaa":1,"bbb":"2","ccc":3,"trim":6}', Arr::toJson(array(
+            'aaa' => 1, 'bbb' => '2', 'ccc' => 3, 'trim' => 6,
+        )));
     }
 
     public function getDataProvider() {
@@ -153,12 +117,12 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
         })->toArray());
     }
 
-    public function testSortByKeys() {
+    public function testSortByFields() {
         $this->assertEquals(array(
             array('a' => 1, 'b' => 3, 'c' => 1),
             array('a' => 1, 'b' => 2, 'c' => 2),
             array('a' => 2, 'b' => 3, 'c' => 3),
-        ), Arr::sortByKeys(array(
+        ), Arr::sortByFields(array(
             array('a' => 2, 'b' => 3, 'c' => 3),
             array('a' => 1, 'b' => 2, 'c' => 2),
             array('a' => 1, 'b' => 3, 'c' => 1),
@@ -167,6 +131,10 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
             'b' => SORT_DESC,
             'c' => SORT_ASC,
         ))->toArray());
+    }
+
+    public function testMerge() {
+        $this->assertEquals(array('a' => 1, 'b' => 2), Arr::merge(array('a' => 1), Arr::from(array('b' => 2))));
     }
 
 }

@@ -97,7 +97,7 @@ class ArrayObject extends \ArrayObject {
         return new static($array);
     }
 
-    public function sortByKeys($keys) {
+    public function sortByFields($keys) {
         return $this->sort(function($left, $right) use ($keys) {
             foreach ($keys as $key => $sort) {
                 $leftValue = !empty($left[$key]) ? $left[$key] : 0;
@@ -115,7 +115,7 @@ class ArrayObject extends \ArrayObject {
     }
 
     public function merge($array) {
-        return array_merge($this, $array);
+        return new static(array_merge($this->toArray(), (($array instanceof static) ? $array->toArray() : $array)));
     }
 
     public function each($callback) {
