@@ -133,8 +133,22 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
         ))->toArray());
     }
 
+    public function noTestMerge() {
+        $start = microtime(true);
+        for ($i = 0; $i < 100000; $i += 1) {
+            $this->assertEquals(array('a' => 1, 'b' => 2), Arr::merge(array('a' => 1), Arr::from(array('b' => 2)))->toArray());
+        }
+        dump(microtime(true) - $start);
+
+        $start = microtime(true);
+        for ($i = 0; $i < 100000; $i += 1) {
+            $this->assertEquals(array('a' => 1, 'b' => 2), array_merge(array('a' => 1), array('b' => 2)));
+        }
+        dump(microtime(true) - $start);
+    }
+
     public function testMerge() {
-        $this->assertEquals(array('a' => 1, 'b' => 2), Arr::merge(array('a' => 1), Arr::from(array('b' => 2))));
+        $this->assertEquals(array('a' => 1, 'b' => 2), Arr::merge(array('a' => 1), Arr::from(array('b' => 2)))->toArray());
     }
 
 }

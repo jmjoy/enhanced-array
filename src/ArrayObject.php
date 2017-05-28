@@ -115,7 +115,10 @@ class ArrayObject extends \ArrayObject {
     }
 
     public function merge($array) {
-        return new static(array_merge($this->toArray(), (($array instanceof static) ? $array->toArray() : $array)));
+        if ($array instanceof Arr || $array instanceof ArrayObject) {
+            $array = $array->toArray();
+        }
+        return new static(array_merge($this->toArray(), $array));
     }
 
     public function each($callback) {
@@ -125,6 +128,14 @@ class ArrayObject extends \ArrayObject {
                 break;
             }
         }
+    }
+
+    public function keys() {
+        return new static(array_keys($this));
+    }
+
+    public function values() {
+        return new static(array_value($this));
     }
 
     public function chunk($size) {
@@ -335,6 +346,26 @@ class ArrayObject extends \ArrayObject {
             $instance[] = $this[$i];
         }
 
+        return $instance;
+    }
+
+    public function only($keys) {
+        $instance = new static();
+        foreach ($this as $key => $value) {
+            if (in_array($key, $keys)) {
+                $instance[$key] = $value;
+            }
+        }
+        return $instance;
+    }
+
+    public function except($keys) {
+        $instance = new static();
+        foreach ($this as $key => $value) {
+            if (!in_array($key, $keys)) {
+                $instance[$key] = $value;
+            }
+        }
         return $instance;
     }
 
