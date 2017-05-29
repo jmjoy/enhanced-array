@@ -151,5 +151,103 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(array('a' => 1, 'b' => 2), Arr::merge(array('a' => 1), Arr::from(array('b' => 2)))->toArray());
     }
 
+    public function testEach() {
+        $sum = 0;
+        $nums = Arr::map(array(1, 2, 3), function($x) {
+            return pow(2, $x);
+        });
+        $nums->each(function($x) use (&$sum) {
+            $sum += $x;
+        });
+        $this->assertEquals(14, $sum);
+
+        $sum = 0;
+        $nums->each(function($x) use (&$sum) {
+            if ($x >= 8) {
+                return false;
+            }
+            $sum += $x;
+        });
+        $this->assertEquals(6, $sum);
+    }
+
+    public function testKeys() {
+        $this->assertEquals(array(
+            'aaa',
+            'bbb',
+            'ccc',
+        ), Arr::keys(array(
+            'aaa' => 1,
+            'bbb' => 2,
+            'ccc' => 3,
+        ))->toArray());
+    }
+
+    public function testValues() {
+        $this->assertEquals(array(1, 2, 3), Arr::values(array(
+            'aaa' => 1 ,
+            'bbb' => 2,
+            'ccc' => 3,
+        ))->toArray());
+    }
+
+    public function testChunk() {
+        $arr = Arr::chunk(array(1, 2, 3, 4, 5), 2)
+             ->map('\\functional\\Arr::toArray')
+             ->toArray();
+
+        $this->assertEquals(array(
+            array(1, 2),
+            array(3, 4),
+            array(5),
+        ), $arr);
+
+        $arr = Arr::chunk(array(1, 2, 3, 4, 5, 6), 3)
+             ->map('\\functional\\Arr::toArray')
+             ->toArray();
+
+        $this->assertEquals(array(
+            array(1, 2, 3),
+            array(4, 5, 6),
+        ), $arr);
+    }
+
+    public function testColumn() {
+        $this->assertEquals(array(
+            'a' => 1,
+            'b' => 2,
+        ), Arr::column(array(
+            'a' => array('num' => 1),
+            'b' => array('num' => 2),
+        ), 'num')->toArray());
+
+        $this->assertEquals(array(
+            'a' => 1,
+            'b' => 2,
+        ), Arr::column(array(
+            'a' => array('num' => array('num2' => 1)),
+            'b' => array('num' => array('num2' => 2)),
+        ), array('num', 'num2'))->toArray());
+    }
+
+    public function testCombine() {
+        $this->assertEquals(array(
+            'a' => 1,
+            'b' => 2,
+        ), Arr::combine(array('a', 'b'), array(1, 2))->toArray());
+    }
+
+    public function testMin() {
+        $this->assertEquals(1, Arr::min(array(2, 3, 4, 1)));
+    }
+
+    public function testMax() {
+        $this->assertEquals(4, Arr::max(array(2, 3, 4, 1)));
+    }
+
+    public function testReverse() {
+        $this->assertEquals(array(1, 4, 3, 2), Arr::reverse(array(2, 3, 4, 1))->toArray());
+    }
+
 }
 

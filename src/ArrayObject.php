@@ -131,46 +131,93 @@ class ArrayObject extends \ArrayObject {
     }
 
     public function keys() {
-        return new static(array_keys($this));
+        $instance = new static();
+        foreach ($this as $key => $_) {
+            $instance[] = $key;
+        }
+        return $instance;
     }
 
     public function values() {
-        return new static(array_value($this));
+        $instance = new static();
+        foreach ($this as $value) {
+            $instance[] = $value;
+        }
+        return $instance;
     }
 
     public function chunk($size) {
-        return array_chunk($this, $size);
+        $instance = new static();
+
+        $tmp = new static();
+        foreach ($this as $value) {
+            if ($tmp->count() >= $size) {
+                $instance[] = $tmp;
+                $tmp = new static();
+            }
+            $tmp[] = $value;
+        }
+        $instance[] = $tmp;
+
+        return $instance;
     }
 
-    public function column($key) {
+    public function column($field) {
         $instance = new static();
         foreach ($this as $key => $value) {
-            if ($this->isArray($key)) {
-                for ($i = 0, $count = count($key); $i < $count; $i += 1) {
-                    $value = &$value[$key[$i]];
+            if ($this->isArray($field)) {
+                for ($i = 0, $count = count($field); $i < $count; $i += 1) {
+                    $value = &$value[$field[$i]];
                 }
                 $instance[$key] = $value;
             } else {
-                $instance[$key] = $value[$key];
+                $instance[$key] = $value[$field];
             }
         }
         return $instance;
     }
 
     public function combine($array) {
-        return array_combine($this, $array);
+        $instance = new static();
+
+        reset($this);
+        reset($array);
+
+        while (($key = each($this)) && ($value = each($array))) {
+            $instance[$key[1]] = $value[1];
+        }
+
+        return $instance;
     }
 
     public function min() {
-        return min($this);
+        $min = reset($this);
+        while (($x = next($this)) !== false) {
+            if ($min > $x) {
+                $min = $x;
+            }
+        }
+        return $min;
     }
 
     public function max() {
-        return max($this);
+        $max = reset($this);
+        while (($x = next($this)) !== false) {
+            if ($max < $x) {
+                $max = $x;
+            }
+        }
+        return $max;
     }
 
     public function reverse() {
-        return array_reverse($this);
+        $instance = new static();
+        end($this);
+        while (key($this) !== null) {
+            $instance[] = current($this);
+            prev($this);
+        }
+        return $instance;
     }
 
     public function map($callback) {
@@ -180,7 +227,7 @@ class ArrayObject extends \ArrayObject {
             if ($result instanceof KeyValue) {
                 $instance[$result->key] = $instance[$result->value];
             } else {
-                $instance[$key] = $value;
+                $instance[$key] = $result;
             }
         }
         return $instance;
