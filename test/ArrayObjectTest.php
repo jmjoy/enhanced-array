@@ -1,6 +1,7 @@
 <?php
 
 use functional\Arr;
+use functional\KeyValue;
 
 class ArrObjectTest extends PHPUnit_Framework_TestCase {
 
@@ -247,6 +248,183 @@ class ArrObjectTest extends PHPUnit_Framework_TestCase {
 
     public function testReverse() {
         $this->assertEquals(array(1, 4, 3, 2), Arr::reverse(array(2, 3, 4, 1))->toArray());
+    }
+
+    public function testMap() {
+        $this->assertEquals(array(
+            'a' => 1,
+            'b' => 2,
+            'c' => 4,
+        ), Arr::map(array(
+            'a' => 0,
+            'b' => 1,
+            'c' => 2,
+        ), function($x) {
+            return pow(2, $x);
+        })->toArray());
+
+        $this->assertEquals(array(
+            'aa' => 1,
+            'bb' => 2,
+            'cc' => 4,
+        ), Arr::map(array(
+            'a' => 0,
+            'b' => 1,
+            'c' => 2,
+        ), function($x, $key) {
+            return new KeyValue($key . $key, pow(2, $x));
+        })->toArray());
+    }
+
+    public function testFilter() {
+        $this->assertEquals(array(
+            'b' => 1,
+        ), Arr::filter(array(
+            'a' => 0,
+            'b' => 1,
+            'c' => 2,
+        ), function($value, $key) {
+            return $value > 0 && ord($key) < ord('c');
+        })->toArray());
+    }
+
+    public function testFoldl() {
+        $this->assertEquals(60, Arr::foldl(
+            array(1, 2, 3, 4, 5), function($last, $value, $key) {
+                return $last - $value * $key;
+            }, 100));
+    }
+
+    public function testFoldr() {
+        $this->assertEquals('3c2b1a', Arr::foldr(array(
+                'a' => 1,
+                'b' => 2,
+                'c' => 3,
+            ), function($last, $value, $key) {
+                return $last . $value . $key;
+            }, ''));
+    }
+
+    public function testKeyBy() {
+        $this->assertEquals(array(
+            'a' => array('field' => 'a'),
+            'b' => array('field' => 'b'),
+            'c' => array('field' => 'c'),
+        ), Arr::keyBy(array(
+            array('field' => 'a'),
+            array('field' => 'b'),
+            array('field' => 'c'),
+        ), 'field')->toArray());
+
+        $this->assertEquals(array(
+            'a0' => array('field' => 'a'),
+            'b1' => array('field' => 'b'),
+            'c2' => array('field' => 'c'),
+        ), Arr::keyBy(array(
+            array('field' => 'a'),
+            array('field' => 'b'),
+            array('field' => 'c'),
+        ), function($value, $key) {
+            return $value['field'] . $key;
+        })->toArray());
+    }
+
+    public function testAll() {
+        $this->assertTrue(Arr::all(array(1, 2, 3, 4)));
+        $this->assertFalse(Arr::all(array(1, 2, 3, 4, 0)));
+        $this->assertTrue(Arr::all(array(1, 2, 3, 4), function($value) {
+            return $value <= 4;
+        }));
+        $this->assertFalse(Arr::all(array(1, 2, 3, 4), function($value) {
+            return $value < 4;
+        }));
+    }
+
+    public function testAny() {
+        $this->assertTrue(Arr::any(array(0, 0, 0, 1)));
+        $this->assertFalse(Arr::any(array(0, 0, 0, 0)));
+        $this->assertTrue(Arr::any(array(1, 2, 3, 4), function($value) {
+            return $value >= 4;
+        }));
+        $this->assertFalse(Arr::any(array(1, 2, 3, 4), function($value) {
+            return $value > 4;
+        }));
+    }
+
+    public function testSum() {
+        $this->assertEquals(0, Arr::sum(array()));
+        $this->assertEquals(10, Arr::sum(array(1, 2, 3, 4)));
+    }
+
+    public function testProduct() {
+        $this->assertEquals(1, Arr::product(array()));
+        $this->assertEquals(24, Arr::product(array(1, 2, 3, 4)));
+    }
+
+    public function testFlatten() {
+        $this->assertEquals(array(), Arr::flatten(array())->toArray());
+        $this->assertEquals(array(1, 2, 3, 2, 3, 4), Arr::flatten(array(
+            array(1, 2, 3),
+            array(2, 3, 4),
+        ))->toArray());
+        $this->assertEquals(array(1, 2, 3, 2, 3, 4), Arr::flatten(array(
+            array(1, 2, 3),
+            array(2, 3),
+            4,
+        ))->toArray());
+    }
+
+    public function testFirst() {
+        $this->assertEquals(4, Arr::first(array(1, 2, 3, 4, 5), function($value) {
+            return $value >= 4;
+        }));
+        $this->assertNull(Arr::first(array(1, 2, 3, 4, 5), function($value) {
+            return $value >= 6;
+        }));
+        $this->assertEquals(4, Arr::first(array(1, 2, 3, 4, 5), function($value) {
+            return $value >= 4;
+        }, true)->value);
+        $this->assertNull(Arr::first(array(1, 2, 3, 4, 5), function($value) {
+            return $value >= 6;
+        }, true)->value);
+    }
+
+    public function testOnly() {
+        $this->assertEquals(array(
+            'a' => 1,
+            'b' => 2,
+        ), Arr::only(array(
+            'a' => 1,
+            'b' => 2,
+            'c' => 3,
+        ), array('a', 'b'))->toArray());
+
+        $this->assertEquals(array(
+            'a' => 1,
+        ), Arr::only(array(
+            'a' => 1,
+            'b' => 2,
+            'c' => 3,
+        ), array('a', 'd'))->toArray());
+    }
+
+    public function testExcept() {
+        $this->assertEquals(array(
+            'c' => 3,
+        ), Arr::except(array(
+            'a' => 1,
+            'b' => 2,
+            'c' => 3,
+        ), array('a', 'b'))->toArray());
+
+        $this->assertEquals(array(
+            'b' => 2,
+            'c' => 3,
+        ), Arr::except(array(
+            'a' => 1,
+            'b' => 2,
+            'c' => 3,
+        ), array('a', 'd'))->toArray());
     }
 
 }

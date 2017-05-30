@@ -13,7 +13,7 @@ class KeyValue {
 
     public function __construct($key, $value) {
         $this->key = $key;
-        $this->value = $right;
+        $this->value = $value;
     }
 
 }

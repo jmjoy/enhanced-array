@@ -225,7 +225,7 @@ class ArrayObject extends \ArrayObject {
         foreach ($this as $key => $value) {
             $result = call_user_func($callback, $value, $key);
             if ($result instanceof KeyValue) {
-                $instance[$result->key] = $instance[$result->value];
+                $instance[$result->key] = $result->value;
             } else {
                 $instance[$key] = $result;
             }
@@ -237,7 +237,7 @@ class ArrayObject extends \ArrayObject {
         $instance = new static();
         foreach ($this as $key => $value) {
             if ($this->callFunc($callback, array($value, $key))) {
-                $instance[$key] = $instance[$value];
+                $instance[$key] = $value;
             }
         }
         return $instance;
@@ -276,7 +276,7 @@ class ArrayObject extends \ArrayObject {
             if (is_string($index)) {
                 $instance[$value[$index]] = $value;
             } else {
-                $instance[$this->callFunc($index, $value, $key)] = $vaule;
+                $instance[$this->callFunc($index, array($value, $key))] = $value;
             }
         }
 
@@ -301,18 +301,18 @@ class ArrayObject extends \ArrayObject {
         return false;
     }
 
-    public function sum($callback = null) {
+    public function sum() {
         $sum = 0;
-        foreach ($this as $key => $value) {
-            $sum += ($callback ? $this->callFunc($callback, array($value, $key)) : $value);
+        foreach ($this as $value) {
+            $sum += $value;
         }
         return $sum;
     }
 
-    public function product($callback = null) {
+    public function product() {
         $sum = 1;
-        foreach ($this as $key => $value) {
-            $sum *= ($callback ? $this->callFunc($callback, array($value, $key)) : $value);
+        foreach ($this as $value) {
+            $sum *= $value;
         }
         return $sum;
     }
@@ -320,8 +320,12 @@ class ArrayObject extends \ArrayObject {
     public function flatten() {
         $instance = new static();
         foreach ($this as $key => $row) {
-            foreach ($row as $value) {
-                $instance[] = $value;
+            if ($this->isArray($row)) {
+                foreach ($row as $value) {
+                    $instance[] = $value;
+                }
+            } else {
+                $instance[] = $row;
             }
         }
         return $instance;
@@ -340,60 +344,6 @@ class ArrayObject extends \ArrayObject {
             return new KeyValue(null, null);
         }
         return null;
-    }
-
-    public function take($n) {
-        $instance = new static();
-        $i = 0;
-        $count = count($this);
-        $is_int = is_int($n);
-
-        while (true) {
-            if ($i >= $count) {
-                break;
-            }
-            if ($is_int) {
-                if ($i >= $n) {
-                    break;
-                }
-            } else {
-                if (!$this->callFunc($n, array($this[$i], $i))) {
-                    break;
-                }
-            }
-            $instance[] = $this[$i];
-            $i += 1;
-        }
-        return $instance;
-    }
-
-    public function drop($n) {
-        $i = 0;
-        $count = count($this);
-        $is_int = is_int($n);
-
-        while (true) {
-            if ($i >= $count) {
-                break;
-            }
-            if ($is_int) {
-                if ($i >= $n) {
-                    break;
-                }
-            } else {
-                if (!$this->callFunc($n, array($this[$i], $i))) {
-                    break;
-                }
-            }
-            $i += 1;
-        }
-
-        $instance = new static();
-        for ($j = $i; $j <= $i; $i += 1) {
-            $instance[] = $this[$i];
-        }
-
-        return $instance;
     }
 
     public function only($keys) {
@@ -415,6 +365,61 @@ class ArrayObject extends \ArrayObject {
         }
         return $instance;
     }
+
+    // TODO Next version
+    // public function take($n) {
+    //     $instance = new static();
+    //     $i = 0;
+    //     $count = count($this);
+    //     $is_int = is_int($n);
+
+    //     while (true) {
+    //         if ($i >= $count) {
+    //             break;
+    //         }
+    //         if ($is_int) {
+    //             if ($i >= $n) {
+    //                 break;
+    //             }
+    //         } else {
+    //             if (!$this->callFunc($n, array($this[$i], $i))) {
+    //                 break;
+    //             }
+    //         }
+    //         $instance[] = $this[$i];
+    //         $i += 1;
+    //     }
+    //     return $instance;
+    // }
+
+    // public function drop($n) {
+    //     $i = 0;
+    //     $count = count($this);
+    //     $is_int = is_int($n);
+
+    //     while (true) {
+    //         if ($i >= $count) {
+    //             break;
+    //         }
+    //         if ($is_int) {
+    //             if ($i >= $n) {
+    //                 break;
+    //             }
+    //         } else {
+    //             if (!$this->callFunc($n, array($this[$i], $i))) {
+    //                 break;
+    //             }
+    //         }
+    //         $i += 1;
+    //     }
+
+    //     $instance = new static();
+    //     for ($j = $i; $j <= $i; $i += 1) {
+    //         $instance[] = $this[$i];
+    //     }
+
+    //     return $instance;
+    // }
 
     protected function isArray($val) {
         return is_array($val) || ($val instanceof ArrayAccess && $val instanceof Countable);
